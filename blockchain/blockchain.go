@@ -16,20 +16,20 @@ import (
 
 /// func 앞에 모양은 구조체에서 쓰이는 method라고 선언하는걸로 이해하면 됨.
 
-type block struct {
+type Block struct {
 	Data     string
 	Hash     string
 	PrevHash string
 }
 
 type blockchain struct {
-	blocks []*block
+	blocks []*Block
 }
 
 var b *blockchain
 var once sync.Once
 
-func (b *block) getHash() {
+func (b *Block) getHash() {
 	hash := sha256.Sum256([]byte(b.PrevHash))
 	b.Hash = fmt.Sprintf("%x", hash)
 }
@@ -44,8 +44,8 @@ func getLastHash() string {
 	return GetBlockChain().blocks[totalBlocks-1].Hash
 }
 
-func createBlock(data string) *block {
-	newBlock := block{data, "", getLastHash()}
+func createBlock(data string) *Block {
+	newBlock := Block{data, "", getLastHash()}
 	newBlock.getHash()
 	return &newBlock
 }
@@ -64,6 +64,6 @@ func GetBlockChain() *blockchain {
 	return b
 }
 
-func (b *blockchain) AllBlocks() []*block {
+func (b *blockchain) AllBlocks() []*Block {
 	return b.blocks
 }
