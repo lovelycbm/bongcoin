@@ -1,11 +1,7 @@
 package main
 
-import (
-	"github.com/lovelycbm/bongcoin/explorer"
-	"github.com/lovelycbm/bongcoin/rest"
-)
+import "github.com/lovelycbm/bongcoin/blockchain"
 
 func main() {
-	go explorer.Start(3000)
-	rest.Start(4000)
+	blockchain.BlockChain()
 }
