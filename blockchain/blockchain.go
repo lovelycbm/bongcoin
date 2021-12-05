@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"crypto/sha256"
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -17,9 +18,10 @@ import (
 /// func 앞에 모양은 구조체에서 쓰이는 method라고 선언하는걸로 이해하면 됨.
 
 type Block struct {
-	Data     string
-	Hash     string
-	PrevHash string
+	Data     string `json:"data"`
+	Hash     string `json:"hash"`
+	PrevHash string `json:"prevHash,omitempty"`
+	Height  int	`json:"height "`
 }
 
 type blockchain struct {
@@ -45,7 +47,7 @@ func getLastHash() string {
 }
 
 func createBlock(data string) *Block {
-	newBlock := Block{data, "", getLastHash()}
+	newBlock := Block{data, "", getLastHash(),len(GetBlockChain().blocks)+1 }
 	newBlock.getHash()
 	return &newBlock
 }
@@ -66,4 +68,14 @@ func GetBlockChain() *blockchain {
 
 func (b *blockchain) AllBlocks() []*Block {
 	return b.blocks
+}
+
+var ErrBlockNotFound = errors.New("block not found")
+
+func (b *blockchain) GetBlock( height int) (*Block,error){
+	if height > len(b.blocks) {
+		return nil, ErrBlockNotFound
+	}
+
+	return b.blocks[height-1] ,nil
 }
