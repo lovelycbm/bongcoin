@@ -1,9 +1,7 @@
 package blockchain
 
 import (
-	"bytes"
 	"crypto/sha256"
-	"encoding/gob"
 	"fmt"
 
 	"github.com/lovelycbm/bongcoin/db"
@@ -17,16 +15,9 @@ type Block struct {
 	Height   int    `json:"height"`
 }
 
-func (b *Block) toByte() []byte{
-	var blockBuffer bytes.Buffer
-	encoder := gob.NewEncoder(&blockBuffer)
-	utils.HandleError(encoder.Encode(b))
-	return blockBuffer.Bytes()
-}
-
 
 func(b *Block) persist() {
-	db.SaveBlock(b.Hash, b.toByte())
+	db.SaveBlock(b.Hash, utils.ToBytes(b))
 }
 
 func cretaeBlock(data string, prevHash string, height int) *Block {
