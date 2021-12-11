@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/boltdb/bolt"
 	"github.com/lovelycbm/bongcoin/utils"
 )
@@ -33,8 +31,12 @@ func DB() *bolt.DB{
 	return db
 }
 
+func Close() {
+	DB().Close()
+}
+
 func SaveBlock(hash string , data []byte)  {
-	fmt.Printf("Saveing Block %s\nData: %b\n", hash, data)
+	// fmt.Printf("Saveing Block %s\nData: %b\n", hash, data)
 	err := DB().Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(blocksBucketName))
 		err := bucket.Put([]byte(hash), data)	
@@ -43,7 +45,7 @@ func SaveBlock(hash string , data []byte)  {
 	utils.HandleError(err)
 }
 
-func SaveBlockChain(data []byte)  {
+func SaveCheckPoint(data []byte)  {
 	err := DB().Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(dataBucketName))
 		err := bucket.Put([]byte(checkpoint), data)	
@@ -57,6 +59,16 @@ func Checkpoint() []byte{
 	DB().View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(dataBucketName))
 		data = bucket.Get([]byte(checkpoint))
+		return nil
+	})	
+	return data
+}
+
+func Block(hash string) []byte{
+	var data []byte
+	DB().View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(blocksBucketName))
+		data = bucket.Get([]byte(hash))
 		return nil
 	})	
 	return data

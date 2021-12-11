@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/lovelycbm/bongcoin/explorer"
 	"github.com/lovelycbm/bongcoin/rest"
@@ -14,7 +15,7 @@ func usage() {
 	fmt.Printf("Please use following flags: \n\n")
 	fmt.Printf("-port:	Set port of the server\n")
 	fmt.Printf("-mode:	Set mode of the server ('rest' or 'html')\n")
-	os.Exit(0)
+	runtime.Goexit()
 }
 
 func Start() {

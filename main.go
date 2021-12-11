@@ -1,7 +1,12 @@
 package main
 
-import "github.com/lovelycbm/bongcoin/blockchain"
+import (
+	"github.com/lovelycbm/bongcoin/cli"
+	"github.com/lovelycbm/bongcoin/db"
+)
 
 func main() {
-	blockchain.BlockChain()	
+	
+	defer db.Close()
+	cli.Start()
 }
