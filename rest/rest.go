@@ -52,15 +52,7 @@ type addPeerPayload struct{
 	Address, Port string
 }
 
-func blocks(rw http.ResponseWriter, r *http.Request) {	
-	switch r.Method {
-	case "GET": 		
-		json.NewEncoder(rw).Encode(blockchain.Blocks(blockchain.BlockChain()))
-	case "POST":					
-		blockchain.BlockChain().AddBlock()		
-		rw.WriteHeader(http.StatusCreated)
-	}
-} 
+
 
 func documentation(rw http.ResponseWriter, r *http.Request) {
 	data := []urlDescription{
@@ -108,6 +100,17 @@ func documentation(rw http.ResponseWriter, r *http.Request) {
 	
 }
 
+func blocks(rw http.ResponseWriter, r *http.Request) {	
+	switch r.Method {
+	case "GET": 		
+		json.NewEncoder(rw).Encode(blockchain.Blocks(blockchain.BlockChain()))
+	case "POST":					
+		newBlock := blockchain.BlockChain().AddBlock()		
+		p2p.BroadcastNewBlock(newBlock)
+		rw.WriteHeader(http.StatusCreated)
+	}
+} 
+
 func block(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)		
 	hash := vars["hash"]
@@ -138,20 +141,23 @@ func loggerMiddleware(next http.Handler) http.Handler {
 }
 
 func status(rw http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(rw).Encode(blockchain.BlockChain())
+	// json.NewEncoder(rw).Encode(blockchain.BlockChain())
+	blockchain.Status(blockchain.BlockChain(),rw)
+}
+
+func mempool(rw http.ResponseWriter, r *http.Request) {		
+	blockchain.MemStatus(blockchain.Mempool(),rw)
+	// blockchain.MempoolReplace(blockchain.Mempool().Txs,rw)
+	// utils.HandleError(json.NewEncoder(rw).Encode(blockchain.Mempool().Txs))
+
 }
 
 func balance(rw http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)		
 	address := vars["address"]
 	// url에 포함되는 쿼리 받는 법
-	total := r.URL.Query().Get("total")
-	// if total == "true" {
-	// 	err := json.NewEncoder(rw).Encode(blockchain.BlockChain().BalanceByAddress(address))
-	// 	utils.HandleError(err)	
-	// } else {
-	
-	// }
+	total := r.URL.Query().Get("total")	
+		
 	switch total {
 		case "true": 
 			amount := blockchain.BalanceByAddress(address,blockchain.BlockChain())			
@@ -164,20 +170,19 @@ func balance(rw http.ResponseWriter, r *http.Request) {
 	
 }
 
-func mempool(rw http.ResponseWriter, r *http.Request) {	
-	utils.HandleError(json.NewEncoder(rw).Encode(blockchain.Mempool.Txs))
-}
 
 func transactions(rw http.ResponseWriter, r *http.Request) {	
 	var payload addTxPayload
 	utils.HandleError(json.NewDecoder(r.Body).Decode(&payload))
-	err:= blockchain.Mempool.AddTx(payload.To, payload.Amount)
+	tx, err:= blockchain.Mempool().AddTx(payload.To, payload.Amount)
 
+	
 	if err != nil {
 		rw.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(rw).Encode(errorResponse{err.Error()})
 		return 
 	}
+	p2p.BroadcastNewTx(tx)
 	rw.WriteHeader(http.StatusCreated)
 }
 
@@ -192,7 +197,7 @@ func peers(rw http.ResponseWriter, r *http.Request){
 		case "POST":
 			var payload addPeerPayload
 			utils.HandleError(json.NewDecoder(r.Body).Decode(&payload))
-			p2p.AddPeer(payload.Address, payload.Port,port)
+			p2p.AddPeer(payload.Address, payload.Port,port[1:],true)
 			rw.WriteHeader(http.StatusOK)
 		case "GET":
 			json.NewEncoder(rw).Encode(p2p.AllPeers(&p2p.Peers))

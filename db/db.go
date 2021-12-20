@@ -1,12 +1,15 @@
 package db
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/lovelycbm/bongcoin/utils"
 	bolt "go.etcd.io/bbolt"
 )
 
 const (
-	dbName = "blockchain.db"
+	dbName = "blockchain"
 	dataBucketName = "data"
 	blocksBucketName = "blocks"
 
@@ -14,9 +17,18 @@ const (
 )
 var db *bolt.DB
 
+func getDbName() string{
+	port:= os.Args[1][6:]	
+	return fmt.Sprintf("%s_%s.db", dbName,port)
+	// for i, a := range os.Args {
+	// 	fmt.Println(i,a)
+	// }
+}
+
 func DB() *bolt.DB{
 	if db == nil {
-		dbPointer, err := bolt.Open(dbName, 0600, nil)
+		// fmt.Println((getDbName()));
+		dbPointer, err := bolt.Open(getDbName(), 0600, nil)
 		db = dbPointer
 		utils.HandleError(err)
 		
@@ -34,6 +46,8 @@ func DB() *bolt.DB{
 func Close() {
 	DB().Close()
 }
+
+
 
 func SaveBlock(hash string , data []byte)  {
 	// fmt.Printf("Saveing Block %s\nData: %b\n", hash, data)
@@ -72,4 +86,13 @@ func Block(hash string) []byte{
 		return nil
 	})	
 	return data
+}
+
+func EmptyBlocks() {
+	DB().Update(func(tx *bolt.Tx) error {
+		utils.HandleError(tx.DeleteBucket([]byte(blocksBucketName)))
+		_ ,err := tx.CreateBucket([]byte(blocksBucketName))
+		utils.HandleError(err)
+		return nil
+	})	
 }

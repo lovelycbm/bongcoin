@@ -1,7 +1,10 @@
 package blockchain
 
 import (
+	"encoding/json"
 	"errors"
+	"net/http"
+	"sync"
 	"time"
 
 	"github.com/lovelycbm/bongcoin/utils"
@@ -13,10 +16,12 @@ const (
 )
 
 type mempool struct {
-	Txs []*Tx
+	Txs map[string]*Tx
+	m sync.Mutex
 }
 
-var Mempool *mempool	= &mempool{}
+var m *mempool
+var memOnce sync.Once
 
 type Tx struct {
 	ID        string `json:"id"`
@@ -43,6 +48,14 @@ type UTxOut struct {
 	Amount int `json:"amount"`
 }
 
+func Mempool() *mempool{
+	memOnce.Do(func() {
+		m 	= &mempool{
+			Txs: make(map[string]*Tx),
+		}
+	})
+	return m 
+}
 
 func (t *Tx) getId() {
 	t.ID = utils.Hash(t)
@@ -75,7 +88,7 @@ func validate(tx *Tx) bool {
 func isOnMempool(uTxOuts *UTxOut) bool {
 	exists := false
 Outer:
-	for _, tx := range Mempool.Txs {
+	for _, tx := range Mempool().Txs {
 		for _, input := range tx.TxIns {
 			if input.TxID == uTxOuts.TxId && input.Index == uTxOuts.Index {
 				exists = true
@@ -85,6 +98,8 @@ Outer:
 	}
 	return exists
 }
+
+
 
 func makeCoinbaseTx(address string) *Tx {
 	txIns := []*TxIn{
@@ -152,19 +167,38 @@ func makeTx(from,to string , amount int) (*Tx, error) {
 
 func (m *mempool) TxToConfirm() []*Tx {
 	coinbase := makeCoinbaseTx(wallet.Wallet().Address)
-	txs := m.Txs
+	var txs []*Tx
 	txs = append(txs, coinbase)
-	m.Txs = nil
+	for _, tx := range m.Txs{
+		txs = append(txs, tx)
+	}
+	txs = append(txs, coinbase)
+	m.Txs = make(map[string]*Tx)
 	return txs
 }
 
 
-func (m *mempool) AddTx(to string, amount int) error{
+func (m *mempool) AddTx(to string, amount int) (*Tx,error){
 	tx, err := makeTx(wallet.Wallet().Address, to, amount)
 	if err != nil {
-		return err
+		return nil,err
 	}
 
-	m.Txs = append(m.Txs, tx)
-	return nil
+	// m.Txs = append(m.Txs, tx)
+	m.Txs[tx.ID] = tx
+	return tx, nil
 } 
+
+func MemStatus(m *mempool, rw http.ResponseWriter){
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	json.NewEncoder(rw).Encode(m.Txs)
+} 
+
+func (m *mempool) AddPeerTx(tx *Tx){
+	m.m.Lock()
+	defer m.m.Unlock()
+
+	m.Txs[tx.ID] = tx
+}

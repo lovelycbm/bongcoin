@@ -32,7 +32,7 @@ func (b *Block) restore(data []byte) {
 	
 }
 
-func(b *Block) persist() {
+func persistBlock(b *Block)  {
 	// hash 를 key 로 하는 block struct를 db에 저장함.
 	db.SaveBlock(b.Hash, utils.ToBytes(b))
 }
@@ -76,7 +76,7 @@ func cretaeBlock( prevHash string, height,diff int) *Block {
 	
 	
 	block.mine()
-	block.Transactions = Mempool.TxToConfirm()
-	block.persist()
+	block.Transactions = Mempool().TxToConfirm()
+	persistBlock(block)
 	return block
 }

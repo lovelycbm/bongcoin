@@ -1,6 +1,8 @@
 package blockchain
 
 import (
+	"encoding/json"
+	"net/http"
 	"sync"
 
 	"github.com/lovelycbm/bongcoin/db"
@@ -33,6 +35,7 @@ type blockchain struct {
 	NewestHash	string `json:"newestHash"`
 	Height  int	`json:"height"`
 	CurrentDifficulty int `json:"currentDifficulty"`
+	m sync.Mutex
 }
 
 var b *blockchain
@@ -42,13 +45,14 @@ func (b *blockchain) restore(data []byte) {
 	utils.FromBytes(b,data)
 	
 }
-func (b *blockchain) AddBlock() {
+func (b *blockchain) AddBlock() *Block{
 	// 새로운 블록을 저장할때 data, blocks 버켓 두군데에다가 저장.	
 	block := cretaeBlock(b.NewestHash, b.Height+1,getDifficulty(b))
 	b.NewestHash = block.Hash
 	b.Height = block.Height
 	b.CurrentDifficulty = block.Difficulty
 	persistBlockchain(b)
+	return block
 }
 
 func persistBlockchain(b *blockchain){
@@ -76,6 +80,8 @@ func FindTx(b *blockchain,targetID string) *Tx {
 // db를 어째서 이렇게 찾아야 하는가 추후 고민 해볼것.
 // 데이터 hash 의 정합성 문제?
 func Blocks(b *blockchain) []*Block{
+	b.m.Lock()
+	defer b.m.Unlock()
 	var blocks []*Block
 	hashCursor:= b.NewestHash
 	for {		
@@ -176,4 +182,51 @@ func BlockChain() *blockchain {
 	return b
 }
 
+func Status(b *blockchain, rw http.ResponseWriter) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	json.NewEncoder(rw).Encode(b)
+}
 
+
+
+
+func (b *blockchain) Replace(newBlocks []*Block) {
+	b.m.Lock()
+	defer b.m.Unlock()
+	b.CurrentDifficulty = newBlocks[0].Difficulty
+	b.Height = len(newBlocks)
+	b.NewestHash = newBlocks[0].Hash
+	persistBlockchain(b)
+	db.EmptyBlocks()
+
+	for _, block := range newBlocks {
+		// persistBlock(block)
+		persistBlock(block)
+
+	}
+}
+
+func (b *blockchain)AddPeerBlock(newBlock *Block){
+	b.m.Lock()
+	m.m.Lock()
+	defer b.m.Unlock()
+	defer m.m.Unlock()
+
+	b.Height +=1
+	b.CurrentDifficulty = newBlock.Difficulty
+	b.NewestHash = newBlock.Hash
+	persistBlockchain(b)
+	persistBlock(newBlock)
+
+	// mempool 동기화가 아직 안됨. 
+	// 가령 채굴이 진행되면 어떤 mem에는 txs값이 있고 어떤 node에는 없을수 있음
+	// 모든 노드의 mem을 초기화 할 필요있음.
+
+	for _, tx := range newBlock.Transactions {
+		_, ok := m.Txs[tx.ID]
+		if ok {
+			delete(m.Txs, tx.ID)
+		}
+	}
+}

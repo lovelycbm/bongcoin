@@ -88,3 +88,5 @@ func initPeer(conn *websocket.Conn, address,port string) *peer {
 	return p
 
 }
+
+	
