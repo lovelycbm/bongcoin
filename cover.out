@@ -1,0 +1,27 @@
+mode: set
+github.com/lovelycbm/bongcoin/utils/utils.go:16.29,17.16 1 1
+github.com/lovelycbm/bongcoin/utils/utils.go:17.16,19.3 1 1
+github.com/lovelycbm/bongcoin/utils/utils.go:22.36,27.2 4 1
+github.com/lovelycbm/bongcoin/utils/utils.go:29.45,32.2 2 1
+github.com/lovelycbm/bongcoin/utils/utils.go:34.33,38.2 3 1
+github.com/lovelycbm/bongcoin/utils/utils.go:40.51,43.18 2 1
+github.com/lovelycbm/bongcoin/utils/utils.go:46.2,46.13 1 1
+github.com/lovelycbm/bongcoin/utils/utils.go:43.18,45.3 1 1
+github.com/lovelycbm/bongcoin/utils/utils.go:49.35,53.2 3 1
+github.com/lovelycbm/bongcoin/wallet/wallet.go:27.27,30.2 2 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:32.39,36.2 3 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:38.42,44.2 5 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:46.40,51.2 4 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:53.39,56.2 2 1
+github.com/lovelycbm/bongcoin/wallet/wallet.go:58.51,62.2 3 1
+github.com/lovelycbm/bongcoin/wallet/wallet.go:64.45,70.2 5 1
+github.com/lovelycbm/bongcoin/wallet/wallet.go:72.64,74.15 2 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:77.2,82.26 6 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:74.15,76.3 1 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:85.56,97.2 9 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:99.23,100.14 1 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:113.2,113.10 1 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:100.14,102.21 2 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:111.3,111.43 1 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:102.21,105.4 1 0
+github.com/lovelycbm/bongcoin/wallet/wallet.go:105.9,109.4 3 0
