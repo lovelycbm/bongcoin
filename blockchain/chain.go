@@ -38,8 +38,17 @@ type blockchain struct {
 	m sync.Mutex
 }
 
+type storage interface {
+	FindBlock(hash string) []byte
+	LoadChain() []byte
+	SaveBlock(hash string, data []byte)
+	SaveChain(data []byte)
+	DeleteAllBlocks()
+}
+
 var b *blockchain
 var once sync.Once
+var dbStorage storage = db.DB{}
 
 func (b *blockchain) restore(data []byte) {
 	utils.FromBytes(b,data)
@@ -57,7 +66,8 @@ func (b *blockchain) AddBlock() *Block{
 
 func persistBlockchain(b *blockchain){
 	// blockchain struct를 byte로 변환하여 db에 저장.	
-	db.SaveCheckPoint(utils.ToBytes(b))
+	// db.SaveCheckPoint(utils.ToBytes(b))
+	dbStorage.SaveChain((utils.ToBytes(b)))
 }
 
 func Txs(b *blockchain) []*Tx {
@@ -171,7 +181,8 @@ func BlockChain() *blockchain {
 		b = &blockchain{
 			Height: 0,
 		}
-		checkpoint := db.Checkpoint()
+		// checkpoint := db.Checkpoint()
+		checkpoint := dbStorage.LoadChain()
 		if checkpoint == nil {
 			b.AddBlock()
 		} else {				
@@ -189,8 +200,6 @@ func Status(b *blockchain, rw http.ResponseWriter) {
 }
 
 
-
-
 func (b *blockchain) Replace(newBlocks []*Block) {
 	b.m.Lock()
 	defer b.m.Unlock()
@@ -198,7 +207,7 @@ func (b *blockchain) Replace(newBlocks []*Block) {
 	b.Height = len(newBlocks)
 	b.NewestHash = newBlocks[0].Hash
 	persistBlockchain(b)
-	db.EmptyBlocks()
+	dbStorage.DeleteAllBlocks()
 
 	for _, block := range newBlocks {
 		// persistBlock(block)

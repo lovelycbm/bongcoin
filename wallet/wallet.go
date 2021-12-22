@@ -7,11 +7,36 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"fmt"
+	"io/fs"
 	"math/big"
 	"os"
 
 	"github.com/lovelycbm/bongcoin/utils"
 )
+
+type fileLayer interface {
+	hasWalletFile() bool
+	writeFile(name string, data []byte, perm fs.FileMode) error
+	readFile(name string) ([]byte, error)
+}
+
+type layer struct{}
+
+func(layer) hasWalletFile() bool {
+	_, err := os.Stat(fileName)
+	return !os.IsNotExist(err)
+}
+
+func(layer) writeFile(name string, data []byte, perm fs.FileMode) error {
+	// return os.WriteFile(fileName, bytes, 0644)
+	return os.WriteFile(name, data, perm)
+}
+
+func(layer) readFile(name string) ([]byte, error){	
+	return os.ReadFile(name)
+}
+
+var files fileLayer = layer{}
 
 type wallet struct {
 	privateKey *ecdsa.PrivateKey
@@ -24,11 +49,6 @@ const (
 	fileName string = "bong.wallet"
 )
 
-func hasWalletFile() bool {
-	_, err := os.Stat(fileName)
-	return !os.IsNotExist(err)
-}
-
 func createPrivKey() *ecdsa.PrivateKey{
 	privKey , err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 	utils.HandleError(err)
@@ -36,7 +56,7 @@ func createPrivKey() *ecdsa.PrivateKey{
 }
 
 func restoreKey() (key *ecdsa.PrivateKey){
-	keyAsBytes, err := os.ReadFile(fileName)
+	keyAsBytes, err := files.readFile(fileName)		
 	utils.HandleError(err)
 	key, err = x509.ParseECPrivateKey(keyAsBytes)
 	utils.HandleError(err)
@@ -46,7 +66,7 @@ func restoreKey() (key *ecdsa.PrivateKey){
 func persistKey(key *ecdsa.PrivateKey) {
 	bytes, err := x509.MarshalECPrivateKey(key)
 	utils.HandleError(err)
-	err = os.WriteFile(fileName, bytes, 0644)
+	err = files.writeFile(fileName, bytes, 0644)
 	utils.HandleError(err)
 }
 
@@ -99,7 +119,7 @@ func Verify(signature , payload , address string) bool {
 func Wallet() *wallet {
 	if w == nil {
 		w = &wallet{}
-		if hasWalletFile(){
+		if files.hasWalletFile(){
 			w.privateKey = restoreKey()
 			// yes -> restore form file 
 		} else {

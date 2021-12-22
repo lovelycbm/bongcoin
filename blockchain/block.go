@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lovelycbm/bongcoin/db"
 	"github.com/lovelycbm/bongcoin/utils"
 )
 
@@ -34,13 +33,14 @@ func (b *Block) restore(data []byte) {
 
 func persistBlock(b *Block)  {
 	// hash 를 key 로 하는 block struct를 db에 저장함.
-	db.SaveBlock(b.Hash, utils.ToBytes(b))
+	// db.SaveBlock(b.Hash, utils.ToBytes(b))
+	dbStorage.SaveBlock(b.Hash, utils.ToBytes(b))
 }
 
 var ErrBlockNotFound = errors.New("Block not found")
 
 func FindBlock(hash string) (*Block, error) {
-	blockBytes := db.Block(hash)
+	blockBytes := dbStorage.FindBlock(hash)
 	if blockBytes == nil {
 		return nil,ErrBlockNotFound
 	}
@@ -75,8 +75,8 @@ func cretaeBlock( prevHash string, height,diff int) *Block {
 	}
 	
 	
-	block.mine()
 	block.Transactions = Mempool().TxToConfirm()
+	block.mine()
 	persistBlock(block)
 	return block
 }
